@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MacLine - магазин техники Apple</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="#catalog" aria-label="MacLine">
+        <span>MAC</span>
+        <span>LINE</span>
+      </a>
+
+      <nav class="nav" aria-label="Основная навигация">
+        <a class="active" href="#catalog">Каталог</a>
+        <a href="#delivery">Доставка</a>
+        <a href="#tradein">Trade-In</a>
+        <a href="#support">Поддержка</a>
+      </nav>
+
+      <div class="actions">
+        <button class="icon-btn" id="favoritesButton" type="button" aria-label="Показать избранное" title="Избранное">
+          <span aria-hidden="true">♡</span>
+          <strong id="favoriteCount">0</strong>
+        </button>
+        <button class="icon-btn" id="cartButton" type="button" aria-label="Открыть корзину" title="Корзина">
+          <span aria-hidden="true">⌁</span>
+          <strong id="cartCount">0</strong>
+        </button>
+        <button class="profile-btn" id="loginButton" type="button">
+          <span id="profileInitial" aria-hidden="true">В</span>
+          <b id="profileText">Войти</b>
+        </button>
+      </div>
+    </header>
+
+    <section class="hero" aria-labelledby="heroTitle">
+      <div class="hero-copy">
+        <p class="eyebrow">Официальная гарантия и доставка по России</p>
+        <h1 id="heroTitle">Выберите свою технику Apple</h1>
+        <p>MacBook, iPhone, iPad, Watch и аксессуары в одном каталоге с быстрым оформлением заказа.</p>
+      </div>
+
+      <form class="search-panel" id="searchForm">
+        <label class="search-field">
+          <span aria-hidden="true">⌕</span>
+          <span class="visually-hidden">Поиск по каталогу</span>
+          <input id="searchInput" type="search" placeholder="Найти iPhone, MacBook или аксессуар" autocomplete="off">
+        </label>
+        <label class="search-field compact">
+          <span aria-hidden="true">⌘</span>
+          <span class="visually-hidden">Быстрая категория</span>
+          <select id="categoryQuick">
+            <option value="all">Все категории</option>
+            <option value="iPhone">iPhone</option>
+            <option value="Mac">Mac</option>
+            <option value="iPad">iPad</option>
+            <option value="Watch">Watch</option>
+            <option value="Audio">Audio</option>
+          </select>
+        </label>
+        <button class="primary-btn" type="submit">Искать</button>
+      </form>
+    </section>
+
+    <section class="toolbar" id="catalog">
+      <div>
+        <h2>Каталог</h2>
+        <span id="resultCount">0 товаров</span>
+      </div>
+      <label class="sort-control">
+        <span>Сортировка</span>
+        <select id="sortSelect">
+          <option value="popular">Сначала популярные</option>
+          <option value="priceAsc">Сначала дешевле</option>
+          <option value="priceDesc">Сначала дороже</option>
+          <option value="rating">По рейтингу</option>
+          <option value="new">Новинки</option>
+        </select>
+      </label>
+    </section>
+
+    <div class="shop-layout">
+      <aside class="filters" aria-label="Фильтры каталога">
+        <details open>
+          <summary>Фильтры</summary>
+          <div class="filter-block">
+            <h3>Категория</h3>
+            <label><input type="checkbox" name="category" value="iPhone"> iPhone</label>
+            <label><input type="checkbox" name="category" value="Mac"> Mac</label>
+            <label><input type="checkbox" name="category" value="iPad"> iPad</label>
+            <label><input type="checkbox" name="category" value="Watch"> Watch</label>
+            <label><input type="checkbox" name="category" value="Audio"> Audio</label>
+          </div>
+          <div class="filter-block">
+            <h3>Цена</h3>
+            <label><input type="radio" name="price" value="all" checked> Любая</label>
+            <label><input type="radio" name="price" value="under100"> До 100 000 ₽</label>
+            <label><input type="radio" name="price" value="100to200"> 100 000-200 000 ₽</label>
+            <label><input type="radio" name="price" value="over200"> От 200 000 ₽</label>
+          </div>
+          <div class="filter-block">
+            <h3>Наличие</h3>
+            <label><input type="checkbox" id="stockOnly"> Только в наличии</label>
+            <label><input type="checkbox" id="saleOnly"> Со скидкой</label>
+          </div>
+          <button class="secondary-btn" id="resetFilters" type="button">Сбросить</button>
+        </details>
+      </aside>
+
+      <section class="products" id="productGrid" aria-live="polite"></section>
+    </div>
+
+    <section class="service-strip" id="delivery">
+      <article>
+        <b>Быстрая доставка</b>
+        <span>Курьером или самовывозом уже сегодня</span>
+      </article>
+      <article id="tradein">
+        <b>Trade-In</b>
+        <span>Оценим старое устройство и зачтем стоимость</span>
+      </article>
+      <article id="support">
+        <b>Поддержка</b>
+        <span>Поможем перенести данные и настроить iCloud</span>
+      </article>
+    </section>
+  </main>
+
+  <div class="drawer" id="cartDrawer" aria-hidden="true">
+    <div class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="cartTitle" tabindex="-1">
+      <button class="close-btn" data-close="cartDrawer" type="button" aria-label="Закрыть">×</button>
+      <h2 id="cartTitle">Корзина</h2>
+      <div id="cartItems" class="cart-items"></div>
+      <div class="cart-total">
+        <span>Итого</span>
+        <strong id="cartTotal">0 ₽</strong>
+      </div>
+      <button class="primary-btn full" id="checkoutButton" type="button">Оформить заказ</button>
+    </div>
+  </div>
+
+  <div class="modal" id="authModal" aria-hidden="true">
+    <form class="modal-card" id="authForm" role="dialog" aria-modal="true" aria-labelledby="authTitle" tabindex="-1">
+      <button class="close-btn" data-close="authModal" type="button" aria-label="Закрыть">×</button>
+      <h2 id="authTitle">Вход в аккаунт</h2>
+      <label>
+        <span>Имя</span>
+        <input id="nameInput" type="text" placeholder="Например, Виктория" autocomplete="name" required>
+      </label>
+      <label>
+        <span>Email</span>
+        <input id="emailInput" type="email" placeholder="you@example.com" autocomplete="email" required>
+      </label>
+      <button class="primary-btn full" type="submit">Войти</button>
+      <p>Аккаунт нужен для избранного, истории заказов и статуса доставки.</p>
+    </form>
+  </div>
+
+  <div class="modal" id="checkoutModal" aria-hidden="true">
+    <form class="modal-card checkout-card" id="checkoutForm" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle" tabindex="-1">
+      <button class="close-btn" data-close="checkoutModal" type="button" aria-label="Закрыть">×</button>
+      <h2 id="checkoutTitle">Оформление заказа</h2>
+      <div class="order-summary" id="checkoutSummary"></div>
+      <label>
+        <span>Телефон</span>
+        <input id="phoneInput" type="tel" placeholder="+7 900 000-00-00" autocomplete="tel" required>
+      </label>
+      <label>
+        <span>Получение</span>
+        <select id="deliveryMethod">
+          <option value="courier">Курьерская доставка</option>
+          <option value="pickup">Самовывоз из магазина</option>
+        </select>
+      </label>
+      <label>
+        <span>Адрес или комментарий</span>
+        <textarea id="addressInput" rows="3" placeholder="Город, улица, дом или удобный пункт выдачи" required></textarea>
+      </label>
+      <button class="primary-btn full" type="submit">Подтвердить заказ</button>
+    </form>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
