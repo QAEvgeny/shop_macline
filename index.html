@@ -3,7 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MacLine - магазин техники </title>
+  <meta name="description" content="MacLine - демо-витрина магазина техники Apple: каталог, фильтры, корзина и оформление заявки на доставку или самовывоз.">
+  <meta name="theme-color" content="#1769e0">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="ru_RU">
+  <meta property="og:title" content="MacLine - магазин техники Apple">
+  <meta property="og:description" content="Каталог техники Apple с корзиной, избранным и быстрой заявкой на покупку.">
+  <meta name="twitter:card" content="summary">
+  <title>MacLine - магазин техники Apple</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231769e0'/%3E%3Cpath d='M15 43V18h7l10 14 10-14h7v25h-7V29L34 40h-4l-8-11v14z' fill='white'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -19,18 +27,19 @@
         <a href="#delivery">Доставка</a>
         <a href="#tradein">Trade-In</a>
         <a href="#support">Поддержка</a>
+        <a href="#contacts">Контакты</a>
       </nav>
 
       <div class="actions">
-        <button class="icon-btn" id="favoritesButton" type="button" aria-label="Показать избранное" title="Избранное">
+        <button class="icon-btn" id="favoritesButton" type="button" aria-label="Показать избранное" title="Избранное" aria-pressed="false">
           <span aria-hidden="true">♡</span>
           <strong id="favoriteCount">0</strong>
         </button>
-        <button class="icon-btn" id="cartButton" type="button" aria-label="Открыть корзину" title="Корзина">
+        <button class="icon-btn" id="cartButton" type="button" aria-label="Открыть корзину" title="Корзина" aria-expanded="false">
           <span aria-hidden="true">⌁</span>
           <strong id="cartCount">0</strong>
         </button>
-        <button class="profile-btn" id="loginButton" type="button">
+        <button class="profile-btn" id="loginButton" type="button" aria-expanded="false">
           <span id="profileInitial" aria-hidden="true">В</span>
           <b id="profileText">Войти</b>
         </button>
@@ -42,6 +51,11 @@
         <p class="eyebrow">Официальная гарантия и доставка по России</p>
         <h1 id="heroTitle">Выберите свою технику Apple</h1>
         <p>MacBook, iPhone, iPad, Watch и аксессуары в одном каталоге с быстрым оформлением заказа.</p>
+        <div class="hero-trust" aria-label="Преимущества MacLine">
+          <span>Гарантия 12 месяцев</span>
+          <span>Проверка перед выдачей</span>
+          <span>Заявка за 2 минуты</span>
+        </div>
       </div>
 
       <form class="search-panel" id="searchForm">
@@ -60,6 +74,7 @@
             <option value="iPad">iPad</option>
             <option value="Watch">Watch</option>
             <option value="Audio">Audio</option>
+            <option value="Accessories">Аксессуары</option>
           </select>
         </label>
         <button class="primary-btn" type="submit">Искать</button>
@@ -94,6 +109,7 @@
             <label><input type="checkbox" name="category" value="iPad"> iPad</label>
             <label><input type="checkbox" name="category" value="Watch"> Watch</label>
             <label><input type="checkbox" name="category" value="Audio"> Audio</label>
+            <label><input type="checkbox" name="category" value="Accessories"> Аксессуары</label>
           </div>
           <div class="filter-block">
             <h3>Цена</h3>
@@ -128,6 +144,33 @@
         <span>Поможем перенести данные и настроить iCloud</span>
       </article>
     </section>
+
+    <footer class="site-footer" id="contacts">
+      <div class="footer-brand">
+        <a class="brand" href="#catalog" aria-label="MacLine">
+          <span>MAC</span>
+          <span>LINE</span>
+        </a>
+        <p>Витрина техники Apple с консультацией, доставкой и заявкой на покупку.</p>
+      </div>
+      <address>
+        <b>Контакты</b>
+        <a href="tel:+78000000000">8 800 000-00-00</a>
+        <a href="mailto:demo@macline.store">demo@macline.store</a>
+        <span>Ежедневно 10:00-21:00</span>
+      </address>
+      <div>
+        <b>Покупателям</b>
+        <a href="#delivery">Доставка и самовывоз</a>
+        <a href="#support">Гарантия и настройка</a>
+        <a href="#tradein">Trade-In</a>
+      </div>
+      <div>
+        <b>Документы</b>
+        <span>Политика конфиденциальности</span>
+        <span>Согласие на обработку данных</span>
+      </div>
+    </footer>
   </main>
 
   <div class="drawer" id="cartDrawer" aria-hidden="true">
@@ -166,6 +209,14 @@
       <h2 id="checkoutTitle">Оформление заказа</h2>
       <div class="order-summary" id="checkoutSummary"></div>
       <label>
+        <span>Имя покупателя</span>
+        <input id="checkoutNameInput" type="text" placeholder="Например, Виктория" autocomplete="name" required>
+      </label>
+      <label>
+        <span>Email для статуса заказа</span>
+        <input id="checkoutEmailInput" type="email" placeholder="you@example.com" autocomplete="email">
+      </label>
+      <label>
         <span>Телефон</span>
         <input id="phoneInput" type="tel" placeholder="+7 900 000-00-00" autocomplete="tel" required>
       </label>
@@ -177,15 +228,30 @@
         </select>
       </label>
       <label>
+        <span>Как связаться</span>
+        <select id="contactMethod">
+          <option value="phone">Позвонить</option>
+          <option value="telegram">Написать в Telegram</option>
+          <option value="whatsapp">Написать в WhatsApp</option>
+          <option value="email">Написать на email</option>
+        </select>
+      </label>
+      <label>
         <span>Адрес или комментарий</span>
         <textarea id="addressInput" rows="3" placeholder="Город, улица, дом или удобный пункт выдачи" required></textarea>
       </label>
-      <button class="primary-btn full" type="submit">Подтвердить заказ</button>
+      <label class="consent-field">
+        <input id="consentInput" type="checkbox" required>
+        <span>Согласен на обработку данных для связи по заказу</span>
+      </label>
+      <div class="form-status" id="checkoutMessage" role="status" aria-live="polite"></div>
+      <button class="primary-btn full" id="submitOrderButton" type="submit">Отправить заявку</button>
     </form>
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <script src="api.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

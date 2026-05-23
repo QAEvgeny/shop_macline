@@ -1,101 +1,4 @@
-const products = [
-  {
-    id: 1,
-    name: "iPhone 15 Pro",
-    category: "iPhone",
-    line: "Apple A17 Pro, 256 ГБ",
-    price: 129990,
-    oldPrice: 139990,
-    rating: 4.9,
-    popular: 98,
-    isNew: true,
-    inStock: true,
-    sale: true,
-    art: "phone",
-    specs: ["титановый корпус и USB-C", "камера 48 Мп, запись ProRes"],
-    tags: ["Новинка", "В наличии"]
-  },
-  {
-    id: 2,
-    name: "MacBook Air 13 M3",
-    category: "Mac",
-    line: "8-ядерный CPU, 16 ГБ, 512 ГБ",
-    price: 154990,
-    oldPrice: null,
-    rating: 4.8,
-    popular: 92,
-    isNew: true,
-    inStock: true,
-    sale: false,
-    art: "laptop",
-    specs: ["до 18 часов работы", "тонкий корпус 1,24 кг"],
-    tags: ["M3", "Хит"]
-  },
-  {
-    id: 3,
-    name: "iPad Pro 11 M4",
-    category: "iPad",
-    line: "Ultra Retina XDR, 256 ГБ",
-    price: 119990,
-    oldPrice: null,
-    rating: 4.7,
-    popular: 86,
-    isNew: true,
-    inStock: true,
-    sale: false,
-    art: "tablet",
-    specs: ["чип M4 для графики и монтажа", "поддержка Apple Pencil Pro"],
-    tags: ["M4", "Pro"]
-  },
-  {
-    id: 4,
-    name: "Apple Watch Series 9",
-    category: "Watch",
-    line: "45 мм, GPS, Midnight",
-    price: 41990,
-    oldPrice: 48990,
-    rating: 4.6,
-    popular: 81,
-    isNew: false,
-    inStock: true,
-    sale: true,
-    art: "watch",
-    specs: ["яркий Always-On дисплей", "датчики здоровья и тренировок"],
-    tags: ["Скидка", "GPS"]
-  },
-  {
-    id: 5,
-    name: "AirPods Pro 2",
-    category: "Audio",
-    line: "USB-C, MagSafe Case",
-    price: 27990,
-    oldPrice: 32990,
-    rating: 4.8,
-    popular: 88,
-    isNew: false,
-    inStock: true,
-    sale: true,
-    art: "audio",
-    specs: ["активное шумоподавление", "адаптивный режим прозрачности"],
-    tags: ["Скидка", "ANC"]
-  },
-  {
-    id: 6,
-    name: "Mac Studio M2 Max",
-    category: "Mac",
-    line: "32 ГБ, 1 ТБ SSD",
-    price: 249990,
-    oldPrice: null,
-    rating: 4.9,
-    popular: 75,
-    isNew: false,
-    inStock: false,
-    sale: false,
-    art: "desktop",
-    specs: ["производительность для 3D и видео", "компактный алюминиевый корпус"],
-    tags: ["Под заказ", "Pro"]
-  }
-];
+let products = [];
 
 const selectors = {
   grid: "#productGrid",
@@ -117,11 +20,18 @@ const selectors = {
   checkoutButton: "#checkoutButton",
   checkoutForm: "#checkoutForm",
   checkoutSummary: "#checkoutSummary",
+  checkoutNameInput: "#checkoutNameInput",
+  checkoutEmailInput: "#checkoutEmailInput",
+  phoneInput: "#phoneInput",
+  deliveryMethod: "#deliveryMethod",
+  contactMethod: "#contactMethod",
+  addressInput: "#addressInput",
+  consentInput: "#consentInput",
+  submitOrderButton: "#submitOrderButton",
+  checkoutMessage: "#checkoutMessage",
   authForm: "#authForm",
   nameInput: "#nameInput",
   emailInput: "#emailInput",
-  phoneInput: "#phoneInput",
-  addressInput: "#addressInput",
   profileText: "#profileText",
   profileInitial: "#profileInitial"
 };
@@ -139,7 +49,7 @@ const focusableSelector = [
   '[tabindex]:not([tabindex="-1"])'
 ].join(",");
 
-const allowedArtClasses = new Set(["phone", "laptop", "tablet", "watch", "audio", "desktop"]);
+const allowedArtClasses = new Set(["phone", "laptop", "tablet", "watch", "audio", "desktop", "accessory"]);
 
 const state = {
   query: "",
@@ -151,10 +61,9 @@ const state = {
   user: loadStorage("maclineUser", null),
   activeLayer: null,
   lastFocused: null,
-  pendingCheckout: false
+  isProductsLoading: true,
+  isSubmittingOrder: false
 };
-
-state.cart = normalizeCart(loadStorage("maclineCart", {}));
 
 function loadStorage(key, fallback) {
   try {
@@ -219,6 +128,10 @@ function getCartEntries() {
     .filter(Boolean);
 }
 
+function getCartTotal() {
+  return getCartEntries().reduce((sum, { product, quantity }) => sum + product.price * quantity, 0);
+}
+
 function getFilteredProducts() {
   const categories = getCheckedValues("category");
   const price = document.querySelector('input[name="price"]:checked').value;
@@ -228,7 +141,8 @@ function getFilteredProducts() {
 
   return products
     .filter((product) => {
-      const searchable = `${product.name} ${product.category} ${product.line} ${product.specs.join(" ")}`.toLowerCase();
+      const specs = product.specs || [];
+      const searchable = `${product.name} ${product.category} ${product.line} ${specs.join(" ")}`.toLowerCase();
       const matchesView = state.view !== "favorites" || state.favorites.has(product.id);
       const matchesQuery = !query || searchable.includes(query);
       const matchesQuick = state.quickCategory === "all" || product.category === state.quickCategory;
@@ -265,11 +179,11 @@ function renderProductCard(product) {
     ? `${product.line} · избранное`
     : `${product.line} · ${product.category} · рейтинг ${product.rating}`;
 
-  const tags = product.tags
+  const tags = (product.tags || [])
     .map((tag, index) => renderTag(tag, index === 1 ? "green" : product.sale ? "pink" : ""))
     .join("");
   const oldPrice = product.oldPrice ? `<span class="old-price">${formatPrice(product.oldPrice)}</span>` : "";
-  const specs = product.specs.map((spec) => `<li>${escapeHtml(spec)}</li>`).join("");
+  const specs = (product.specs || []).map((spec) => `<li>${escapeHtml(spec)}</li>`).join("");
 
   return `
     <article class="product-card">
@@ -296,6 +210,12 @@ function renderProductCard(product) {
 }
 
 function renderProducts() {
+  if (state.isProductsLoading) {
+    elements.resultCount.textContent = "Загрузка";
+    elements.grid.innerHTML = '<div class="empty-state">Загружаем каталог...</div>';
+    return;
+  }
+
   const list = getFilteredProducts();
   const countText = `${list.length} ${plural(list.length, ["товар", "товара", "товаров"])}`;
 
@@ -313,6 +233,16 @@ function renderProducts() {
   }
 
   elements.grid.innerHTML = list.map(renderProductCard).join("");
+}
+
+function renderCatalogError() {
+  state.isProductsLoading = false;
+  elements.resultCount.textContent = "Каталог недоступен";
+  elements.grid.innerHTML = `
+    <div class="empty-state">
+      Не удалось загрузить каталог. Проверьте подключение и обновите страницу.
+    </div>
+  `;
 }
 
 function getEmptyMessage() {
@@ -336,6 +266,7 @@ function renderCounters() {
 
 function renderCart() {
   const entries = getCartEntries();
+  elements.checkoutButton.disabled = !entries.length;
 
   if (!entries.length) {
     elements.cartItems.innerHTML = '<div class="empty-state">Корзина пока пуста.</div>';
@@ -367,7 +298,7 @@ function renderCart() {
 
 function renderCheckoutSummary() {
   const entries = getCartEntries();
-  const total = entries.reduce((sum, { product, quantity }) => sum + product.price * quantity, 0);
+  const total = getCartTotal();
 
   elements.checkoutSummary.innerHTML = `
     <b>Ваш заказ</b>
@@ -401,6 +332,20 @@ function renderProfile() {
   elements.emailInput.value = state.user.email;
 }
 
+function prefillCheckoutForm() {
+  clearCheckoutMessage();
+
+  if (!state.user) return;
+
+  if (!elements.checkoutNameInput.value) {
+    elements.checkoutNameInput.value = state.user.name;
+  }
+
+  if (!elements.checkoutEmailInput.value) {
+    elements.checkoutEmailInput.value = state.user.email;
+  }
+}
+
 function plural(number, words) {
   const last = number % 10;
   const lastTwo = number % 100;
@@ -414,7 +359,23 @@ function showToast(message) {
   elements.toast.textContent = message;
   elements.toast.classList.add("show");
   window.clearTimeout(showToast.timer);
-  showToast.timer = window.setTimeout(() => elements.toast.classList.remove("show"), 2400);
+  showToast.timer = window.setTimeout(() => elements.toast.classList.remove("show"), 2800);
+}
+
+function setCheckoutMessage(message, type = "error") {
+  elements.checkoutMessage.textContent = message;
+  elements.checkoutMessage.className = `form-status ${type}`;
+}
+
+function clearCheckoutMessage() {
+  elements.checkoutMessage.textContent = "";
+  elements.checkoutMessage.className = "form-status";
+}
+
+function setSubmittingOrder(isSubmitting) {
+  state.isSubmittingOrder = isSubmitting;
+  elements.submitOrderButton.disabled = isSubmitting;
+  elements.submitOrderButton.textContent = isSubmitting ? "Отправляем заявку..." : "Отправить заявку";
 }
 
 function setCatalogView(view) {
@@ -497,200 +458,275 @@ function closeActiveLayer() {
   if (layer) closeLayer(layer.id);
 }
 
-elements.searchForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  state.query = elements.searchInput.value;
-  state.quickCategory = elements.categoryQuick.value;
-  renderProducts();
-});
+function isValidPhone(value) {
+  return value.replace(/\D/g, "").length >= 10;
+}
 
-elements.searchInput.addEventListener("input", (event) => {
-  state.query = event.target.value;
-  renderProducts();
-});
-
-elements.categoryQuick.addEventListener("change", (event) => {
-  state.quickCategory = event.target.value;
-  renderProducts();
-});
-
-elements.sortSelect.addEventListener("change", (event) => {
-  state.sort = event.target.value;
-  renderProducts();
-});
-
-elements.filters.addEventListener("change", renderProducts);
-
-elements.resetFilters.addEventListener("click", () => {
-  document.querySelectorAll('.filters input[type="checkbox"]').forEach((input) => {
-    input.checked = false;
-  });
-  document.querySelector('input[name="price"][value="all"]').checked = true;
-  renderProducts();
-});
-
-elements.grid.addEventListener("click", (event) => {
-  const favoriteButton = event.target.closest("[data-favorite]");
-  const cartButton = event.target.closest("[data-cart]");
-
-  if (favoriteButton) {
-    const id = Number(favoriteButton.dataset.favorite);
-
-    if (state.favorites.has(id)) {
-      state.favorites.delete(id);
-      showToast("Удалено из избранного");
-    } else {
-      state.favorites.add(id);
-      showToast("Добавлено в избранное");
-    }
-
-    renderCounters();
-    renderProducts();
-  }
-
-  if (cartButton) {
-    const id = Number(cartButton.dataset.cart);
-    state.cart[id] = (state.cart[id] || 0) + 1;
-    renderCounters();
-    renderCart();
-    showToast("Товар добавлен в корзину");
-  }
-});
-
-elements.cartItems.addEventListener("click", (event) => {
-  const button = event.target.closest("[data-qty]");
-  if (!button) return;
-
-  const id = Number(button.dataset.qty);
-  const delta = Number(button.dataset.delta);
-  state.cart[id] += delta;
-
-  if (state.cart[id] <= 0) {
-    delete state.cart[id];
-  }
-
-  renderCounters();
-  renderCart();
-});
-
-elements.cartButton.addEventListener("click", () => {
-  renderCart();
-  openLayer("cartDrawer");
-});
-
-elements.favoritesButton.addEventListener("click", () => {
-  const nextView = state.view === "favorites" ? "catalog" : "favorites";
-  setCatalogView(nextView);
-
-  if (nextView === "favorites" && !state.favorites.size) {
-    showToast("В избранном пока пусто");
-  }
-});
-
-document.querySelector('.nav a[href="#catalog"]').addEventListener("click", () => {
-  setCatalogView("catalog");
-});
-
-elements.loginButton.addEventListener("click", () => {
-  renderProfile();
-  openLayer("authModal");
-});
-
-elements.authForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-
-  const name = elements.nameInput.value.trim();
-  const email = elements.emailInput.value.trim();
-
-  if (!name || !email) {
-    showToast("Заполните имя и email");
-    return;
-  }
-
-  state.user = { name, email };
-  saveStorage("maclineUser", state.user);
-  renderProfile();
-  closeLayer("authModal", { restoreFocus: false });
-
-  if (state.pendingCheckout && getCartEntries().length) {
-    state.pendingCheckout = false;
-    renderCheckoutSummary();
-    openLayer("checkoutModal");
-    showToast("Теперь можно подтвердить заказ");
-    return;
-  }
-
-  showToast(`Здравствуйте, ${name}`);
-});
-
-elements.checkoutButton.addEventListener("click", () => {
-  if (!getCartEntries().length) {
-    showToast("Добавьте товары перед оформлением");
-    return;
-  }
-
-  if (!state.user) {
-    state.pendingCheckout = true;
-    closeLayer("cartDrawer", { restoreFocus: false });
-    openLayer("authModal");
-    showToast("Войдите, чтобы оформить заказ");
-    return;
-  }
-
-  renderCheckoutSummary();
-  closeLayer("cartDrawer", { restoreFocus: false });
-  openLayer("checkoutModal");
-});
-
-elements.checkoutForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-
+function buildOrderPayload() {
+  const entries = getCartEntries();
+  const customerName = elements.checkoutNameInput.value.trim();
+  const customerEmail = elements.checkoutEmailInput.value.trim();
   const phone = elements.phoneInput.value.trim();
   const address = elements.addressInput.value.trim();
 
-  if (!phone || !address) {
-    showToast("Заполните телефон и адрес");
-    return;
-  }
+  return {
+    customer: {
+      name: customerName,
+      email: customerEmail,
+      phone,
+      preferredContact: elements.contactMethod.value
+    },
+    delivery: {
+      method: elements.deliveryMethod.value,
+      address
+    },
+    items: entries.map(({ product, quantity }) => ({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      quantity
+    })),
+    total: getCartTotal(),
+    comment: address
+  };
+}
 
-  const orderNumber = `ML-${Date.now().toString().slice(-6)}`;
-  state.cart = {};
-  state.pendingCheckout = false;
-  renderCounters();
-  renderCart();
-  renderProducts();
-  elements.checkoutForm.reset();
-  closeLayer("checkoutModal", { restoreFocus: false });
-  showToast(`Заказ ${orderNumber} оформлен. Менеджер свяжется с вами.`);
-});
+function bindEvents() {
+  elements.searchForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    state.query = elements.searchInput.value;
+    state.quickCategory = elements.categoryQuick.value;
+    renderProducts();
+  });
 
-document.querySelectorAll("[data-close]").forEach((button) => {
-  button.addEventListener("click", () => closeLayer(button.dataset.close));
-});
+  elements.searchInput.addEventListener("input", (event) => {
+    state.query = event.target.value;
+    renderProducts();
+  });
 
-document.querySelectorAll(".drawer, .modal").forEach((layer) => {
-  layer.addEventListener("click", (event) => {
-    if (event.target === layer) {
-      closeLayer(layer.id);
+  elements.categoryQuick.addEventListener("change", (event) => {
+    state.quickCategory = event.target.value;
+    renderProducts();
+  });
+
+  elements.sortSelect.addEventListener("change", (event) => {
+    state.sort = event.target.value;
+    renderProducts();
+  });
+
+  elements.filters.addEventListener("change", renderProducts);
+
+  elements.resetFilters.addEventListener("click", () => {
+    document.querySelectorAll('.filters input[type="checkbox"]').forEach((input) => {
+      input.checked = false;
+    });
+    document.querySelector('input[name="price"][value="all"]').checked = true;
+    renderProducts();
+  });
+
+  elements.grid.addEventListener("click", (event) => {
+    const favoriteButton = event.target.closest("[data-favorite]");
+    const cartButton = event.target.closest("[data-cart]");
+
+    if (favoriteButton) {
+      const id = Number(favoriteButton.dataset.favorite);
+
+      if (state.favorites.has(id)) {
+        state.favorites.delete(id);
+        showToast("Удалено из избранного");
+      } else {
+        state.favorites.add(id);
+        showToast("Добавлено в избранное");
+      }
+
+      renderCounters();
+      renderProducts();
+    }
+
+    if (cartButton) {
+      const id = Number(cartButton.dataset.cart);
+      state.cart[id] = (state.cart[id] || 0) + 1;
+      renderCounters();
+      renderCart();
+      showToast("Товар добавлен в корзину");
     }
   });
-});
 
-document.addEventListener("keydown", (event) => {
-  const layer = document.querySelector(".drawer.open, .modal.open");
-  if (!layer) return;
+  elements.cartItems.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-qty]");
+    if (!button) return;
 
-  if (event.key === "Escape") {
+    const id = Number(button.dataset.qty);
+    const delta = Number(button.dataset.delta);
+    state.cart[id] += delta;
+
+    if (state.cart[id] <= 0) {
+      delete state.cart[id];
+    }
+
+    renderCounters();
+    renderCart();
+  });
+
+  elements.cartButton.addEventListener("click", () => {
+    renderCart();
+    openLayer("cartDrawer");
+  });
+
+  elements.favoritesButton.addEventListener("click", () => {
+    const nextView = state.view === "favorites" ? "catalog" : "favorites";
+    setCatalogView(nextView);
+
+    if (nextView === "favorites" && !state.favorites.size) {
+      showToast("В избранном пока пусто");
+    }
+  });
+
+  document.querySelector('.nav a[href="#catalog"]').addEventListener("click", () => {
+    setCatalogView("catalog");
+  });
+
+  elements.loginButton.addEventListener("click", () => {
+    renderProfile();
+    openLayer("authModal");
+  });
+
+  elements.authForm.addEventListener("submit", (event) => {
     event.preventDefault();
-    closeActiveLayer();
-  }
 
-  if (event.key === "Tab") {
-    trapFocus(event, layer);
-  }
-});
+    const name = elements.nameInput.value.trim();
+    const email = elements.emailInput.value.trim();
 
-renderProfile();
-renderCounters();
-renderCart();
-renderProducts();
+    if (!name || !email) {
+      showToast("Заполните имя и email");
+      return;
+    }
+
+    state.user = { name, email };
+    saveStorage("maclineUser", state.user);
+    renderProfile();
+    closeLayer("authModal", { restoreFocus: false });
+    showToast(`Здравствуйте, ${name}`);
+  });
+
+  elements.checkoutButton.addEventListener("click", () => {
+    if (!getCartEntries().length) {
+      showToast("Добавьте товары перед оформлением");
+      return;
+    }
+
+    renderCheckoutSummary();
+    prefillCheckoutForm();
+    closeLayer("cartDrawer", { restoreFocus: false });
+    openLayer("checkoutModal");
+  });
+
+  elements.checkoutForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (state.isSubmittingOrder) return;
+
+    const entries = getCartEntries();
+    const customerName = elements.checkoutNameInput.value.trim();
+    const customerEmail = elements.checkoutEmailInput.value.trim();
+    const phone = elements.phoneInput.value.trim();
+    const address = elements.addressInput.value.trim();
+
+    if (!entries.length) {
+      setCheckoutMessage("Корзина пуста. Добавьте товар перед отправкой заявки.");
+      return;
+    }
+
+    if (!customerName || !phone || !address) {
+      setCheckoutMessage("Заполните имя, телефон и адрес или комментарий.");
+      return;
+    }
+
+    if (!isValidPhone(phone)) {
+      setCheckoutMessage("Проверьте телефон: нужно минимум 10 цифр.");
+      return;
+    }
+
+    if (!elements.consentInput.checked) {
+      setCheckoutMessage("Подтвердите согласие на обработку данных.");
+      return;
+    }
+
+    const order = buildOrderPayload();
+    setSubmittingOrder(true);
+    setCheckoutMessage("Отправляем заявку...", "info");
+
+    try {
+      const result = await window.MacLineApi.createOrder(order);
+
+      if (customerEmail) {
+        state.user = { name: customerName, email: customerEmail };
+        saveStorage("maclineUser", state.user);
+        renderProfile();
+      }
+
+      state.cart = {};
+      renderCounters();
+      renderCart();
+      renderProducts();
+      elements.checkoutForm.reset();
+      clearCheckoutMessage();
+      closeLayer("checkoutModal", { restoreFocus: false });
+      showToast(`Заявка ${result.orderNumber} принята. Менеджер свяжется с вами.`);
+    } catch {
+      setCheckoutMessage("Не удалось отправить заявку. Попробуйте еще раз.");
+      showToast("Заявка не отправилась");
+    } finally {
+      setSubmittingOrder(false);
+    }
+  });
+
+  document.querySelectorAll("[data-close]").forEach((button) => {
+    button.addEventListener("click", () => closeLayer(button.dataset.close));
+  });
+
+  document.querySelectorAll(".drawer, .modal").forEach((layer) => {
+    layer.addEventListener("click", (event) => {
+      if (event.target === layer) {
+        closeLayer(layer.id);
+      }
+    });
+  });
+
+  document.addEventListener("keydown", (event) => {
+    const layer = document.querySelector(".drawer.open, .modal.open");
+    if (!layer) return;
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeActiveLayer();
+    }
+
+    if (event.key === "Tab") {
+      trapFocus(event, layer);
+    }
+  });
+}
+
+async function init() {
+  bindEvents();
+  renderProfile();
+  renderProducts();
+
+  try {
+    products = await window.MacLineApi.getProducts();
+    state.cart = normalizeCart(loadStorage("maclineCart", {}));
+    state.isProductsLoading = false;
+    renderCounters();
+    renderCart();
+    renderProducts();
+  } catch {
+    state.cart = {};
+    renderCounters();
+    renderCart();
+    renderCatalogError();
+    showToast("Каталог не загрузился");
+  }
+}
+
+init();
