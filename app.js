@@ -184,11 +184,24 @@ function renderProductCard(product) {
     .join("");
   const oldPrice = product.oldPrice ? `<span class="old-price">${formatPrice(product.oldPrice)}</span>` : "";
   const specs = (product.specs || []).map((spec) => `<li>${escapeHtml(spec)}</li>`).join("");
+  const image = product.image?.src
+    ? `
+      <img
+        class="product-image"
+        src="${escapeHtml(product.image.src)}"
+        alt="${escapeHtml(product.image.alt || product.name)}"
+        loading="lazy"
+        decoding="async"
+        onerror="this.closest('.product-art').classList.add('image-failed'); this.remove();"
+      >
+    `
+    : "";
 
   return `
     <article class="product-card">
-      <div class="product-art" aria-hidden="true">
-        <span class="device ${artClass}"></span>
+      <div class="product-art">
+        ${image}
+        <span class="device ${artClass}" aria-hidden="true"></span>
       </div>
       <div class="product-info">
         <h3>${escapeHtml(product.name)}</h3>
@@ -491,6 +504,15 @@ function buildOrderPayload() {
   };
 }
 
+function getDeliveryMessage(delivery) {
+  return {
+    telegram: "Отправили в Telegram.",
+    email: "Отправили на email.",
+    "email-draft": "Открыли письмо для отправки.",
+    demo: "Сохранили в демо-режиме."
+  }[delivery] || "Менеджер свяжется с вами.";
+}
+
 function bindEvents() {
   elements.searchForm.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -672,7 +694,7 @@ function bindEvents() {
       elements.checkoutForm.reset();
       clearCheckoutMessage();
       closeLayer("checkoutModal", { restoreFocus: false });
-      showToast(`Заявка ${result.orderNumber} принята. Менеджер свяжется с вами.`);
+      showToast(`Заявка ${result.orderNumber} принята. ${getDeliveryMessage(result.delivery)}`);
     } catch {
       setCheckoutMessage("Не удалось отправить заявку. Попробуйте еще раз.");
       showToast("Заявка не отправилась");
