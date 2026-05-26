@@ -1,5 +1,5 @@
 window.MacLineConfig = {
-  apiBaseUrl: "",
+  apiBaseUrl: window.location.protocol === "file:" ? "" : "/api",
   orderTransport: "demo",
   telegram: {
     botToken: "",

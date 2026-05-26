@@ -509,6 +509,7 @@ function getDeliveryMessage(delivery) {
     telegram: "Отправили в Telegram.",
     email: "Отправили на email.",
     "email-draft": "Открыли письмо для отправки.",
+    backend: "Сохранили на сервере.",
     demo: "Сохранили в демо-режиме."
   }[delivery] || "Менеджер свяжется с вами.";
 }
